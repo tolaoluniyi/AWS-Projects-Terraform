@@ -140,8 +140,12 @@ resource "aws_instance" "private-instance" {
 
   user_data = <<-EOF
     #!/bin/bash
-    echo "Hello from private instance" > /var/www/html/index.html
-    nohup busybox httpd -f -p 80 &
+    #use this for your user data
+    yum update -y
+    yum install -y httpd
+    systemctl start httpd
+    systemctl enable httpd
+    echo "<h1>A hot bowl of VPC a la carte</h1> /var/www/html/index.html
   EOF
 
   tags = {
