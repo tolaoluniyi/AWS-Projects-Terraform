@@ -118,7 +118,7 @@ resource "aws_instance" "public-instance" {
   #"ami-0c55b159cbfafe1f0" # Update this with a valid AMI ID for your region
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public-subnet.id
-
+  key_name = "devopskeypair"
   user_data = <<-EOF
     #!/bin/bash
     #use this for your user data
@@ -139,7 +139,7 @@ resource "aws_instance" "private-instance" {
   #"ami-0c55b159cbfafe1f0" # Update this with a valid AMI ID for your region
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private-subnet.id
-
+  key_name = "devopskeypair"
   user_data = <<-EOF
     #!/bin/bash
     #use this for your user data
