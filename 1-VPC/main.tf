@@ -114,7 +114,8 @@ resource "aws_network_acl_association" "public-subnet-association" {
 }
 
 resource "aws_instance" "public-instance" {
-  ami           = "ami-0c55b159cbfafe1f0" # Update this with a valid AMI ID for your region
+  ami           = "ami-0427090fd1714168b"
+  #"ami-0c55b159cbfafe1f0" # Update this with a valid AMI ID for your region
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public-subnet.id
 
@@ -134,7 +135,8 @@ resource "aws_instance" "public-instance" {
 }
 
 resource "aws_instance" "private-instance" {
-  ami           = "ami-0c55b159cbfafe1f0" # Update this with a valid AMI ID for your region
+  ami           = "ami-0427090fd1714168b"
+  #"ami-0c55b159cbfafe1f0" # Update this with a valid AMI ID for your region
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private-subnet.id
 
