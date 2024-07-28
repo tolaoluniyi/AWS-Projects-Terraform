@@ -9,7 +9,7 @@ resource "aws_vpc" "First-VPC" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "demo"
+    Name = "First-VPC"
   }
 }
 # create subnet
@@ -97,7 +97,7 @@ resource "aws_instance" "foo" {
   vpc_security_group_ids = [aws_security_group.allow_tls.id]
   availability_zone = "us-east-1a"
   key_name = "devopskeypair"
-  count = 5
+  count = 1
   user_data  =  "${file("UserData.sh")}"
 
   tags = {
