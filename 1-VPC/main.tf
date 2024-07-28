@@ -14,7 +14,7 @@ resource "aws_vpc" "First-VPC" {
 }
 # create subnet
 resource "aws_subnet" "public_subnet" {
-  vpc_id     = aws_vpc.demo.id
+  vpc_id     = aws_vpc.First-VPC.id
   cidr_block = "10.0.1.0/24"
   map_public_ip_on_launch = true
   availability_zone = "us-east-1a"
@@ -26,7 +26,7 @@ resource "aws_subnet" "public_subnet" {
 
 # create internet gateway
 resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.demo.id
+  vpc_id = aws_vpc.First-VPC.id
 
   tags = {
     Name = "igw"
@@ -66,21 +66,21 @@ resource "aws_security_group" "allow_tls" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_tls_ipv4" {
   security_group_id = aws_security_group.allow_tls.id
-  cidr_ipv4         = aws_vpc.demo.cidr_block
+  cidr_ipv4         = aws_vpc.First-VPC.cidr_block
   from_port         = 443
   ip_protocol       = "tcp"
   to_port           = 443
 }
 resource "aws_vpc_security_group_ingress_rule" "allow_http_ipv4" {
   security_group_id = aws_security_group.allow_tls.id
-  cidr_ipv4         = aws_vpc.demo.cidr_block
+  cidr_ipv4         = aws_vpc.First-VPC.cidr_block
   from_port         = 80
   ip_protocol       = "tcp"
   to_port           = 80
 }
 resource "aws_vpc_security_group_ingress_rule" "allow_ssh_ipv4" {
   security_group_id = aws_security_group.allow_tls.id
-  cidr_ipv4         = aws_vpc.demo.cidr_block
+  cidr_ipv4         = aws_vpc.First-VPC.cidr_block
   from_port         = 22
   ip_protocol       = "tcp"
   to_port           = 22
@@ -99,7 +99,7 @@ resource "aws_instance" "foo" {
   key_name = "devopskeypair"
   count = 5
   user_data  =  "${file("UserData.sh")}"
-  
+
   tags = {
     Name = "server1"
   }
