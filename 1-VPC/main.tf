@@ -103,6 +103,4 @@ resource "aws_instance" "foo" {
   tags = {
     Name = "server1"
   }
-
-
 }
