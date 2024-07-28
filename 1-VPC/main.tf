@@ -1,165 +1,108 @@
 provider "aws" {
-  region = "us-east-1"
+  region     = "us-east-1"
 }
 
+# custom vpc
 resource "aws_vpc" "First-VPC" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block       = "10.0.0.0/16"
+  instance_tenancy = "default"
+  enable_dns_hostnames = true
+
   tags = {
-    Name = "First-VPC"
+    Name = "demo"
   }
 }
-
-resource "aws_internet_gateway" "Public-gateway" {
-  vpc_id = aws_vpc.First-VPC.id
-  tags = {
-    Name = "Public-gateway"
-  }
-}
-
-resource "aws_subnet" "public-subnet" {
-  vpc_id     = aws_vpc.First-VPC.id
+# create subnet
+resource "aws_subnet" "public_subnet" {
+  vpc_id     = aws_vpc.demo.id
   cidr_block = "10.0.1.0/24"
   map_public_ip_on_launch = true
+  availability_zone = "us-east-1a"
+
   tags = {
-    Name = "public-subnet"
+    Name = "public_subnet"
   }
 }
 
-resource "aws_subnet" "private-subnet" {
-  vpc_id     = aws_vpc.First-VPC.id
-  cidr_block = "10.0.2.0/24"
+# create internet gateway
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.demo.id
+
   tags = {
-    Name = "private-subnet"
+    Name = "igw"
   }
 }
 
-resource "aws_route_table" "public-routetable" {
-  vpc_id = aws_vpc.First-VPC.id
+# create route table
+resource "aws_route_table" "example" {
+  vpc_id = aws_vpc.demo.id
+
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.Public-gateway.id
+    gateway_id = aws_internet_gateway.igw.id
   }
+
   tags = {
-    Name = "public-routetable"
+    Name = "demo_route_table"
   }
 }
 
-resource "aws_route_table_association" "public-subnet-association" {
-  subnet_id      = aws_subnet.public-subnet.id
-  route_table_id = aws_route_table.public-routetable.id
+# route table association
+resource "aws_route_table_association" "a" {
+  subnet_id      = aws_subnet.public_subnet.id
+  route_table_id = aws_route_table.example.id
 }
 
-resource "aws_route_table" "private-routetable" {
-  vpc_id = aws_vpc.First-VPC.id
+# create security group
+resource "aws_security_group" "allow_tls" {
+  name        = "allow_tls"
+  description = "Allow TLS inbound traffic and all outbound traffic"
+  vpc_id      = aws_vpc.First-VPC.id
+
   tags = {
-    Name = "private-routetable"
+    Name = "allow_tls"
   }
 }
 
-resource "aws_route_table_association" "private-subnet-association" {
-  subnet_id      = aws_subnet.private-subnet.id
-  route_table_id = aws_route_table.private-routetable.id
+resource "aws_vpc_security_group_ingress_rule" "allow_tls_ipv4" {
+  security_group_id = aws_security_group.allow_tls.id
+  cidr_ipv4         = aws_vpc.demo.cidr_block
+  from_port         = 443
+  ip_protocol       = "tcp"
+  to_port           = 443
 }
-
-resource "aws_network_acl" "private-NACL" {
-  vpc_id = aws_vpc.First-VPC.id
-  tags = {
-    Name = "private-NACL"
-  }
-
-  ingress {
-    protocol   = "-1"
-    rule_no    = 100
-    action     = "allow"
-    cidr_block = "0.0.0.0/0"
-    from_port  = 0
-    to_port    = 0
-  }
-
-  egress {
-    protocol   = "-1"
-    rule_no    = 100
-    action     = "allow"
-    cidr_block = "0.0.0.0/0"
-    from_port  = 0
-    to_port    = 0
-  }
+resource "aws_vpc_security_group_ingress_rule" "allow_http_ipv4" {
+  security_group_id = aws_security_group.allow_tls.id
+  cidr_ipv4         = aws_vpc.demo.cidr_block
+  from_port         = 80
+  ip_protocol       = "tcp"
+  to_port           = 80
 }
-
-resource "aws_network_acl" "public-NACL" {
-  vpc_id = aws_vpc.First-VPC.id
-  tags = {
-    Name = "public-NACL"
-  }
-
-  ingress {
-    protocol   = "-1"
-    rule_no    = 100
-    action     = "allow"
-    cidr_block = "0.0.0.0/0"
-    from_port  = 0
-    to_port    = 0
-  }
-
-  egress {
-    protocol   = "-1"
-    rule_no    = 100
-    action     = "allow"
-    cidr_block = "0.0.0.0/0"
-    from_port  = 0
-    to_port    = 0
-  }
+resource "aws_vpc_security_group_ingress_rule" "allow_ssh_ipv4" {
+  security_group_id = aws_security_group.allow_tls.id
+  cidr_ipv4         = aws_vpc.demo.cidr_block
+  from_port         = 22
+  ip_protocol       = "tcp"
+  to_port           = 22
 }
-
-resource "aws_network_acl_association" "private-subnet-association" {
-  subnet_id = aws_subnet.private-subnet.id
-  network_acl_id = aws_network_acl.private-NACL.id
+resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
+  security_group_id = aws_security_group.allow_tls.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1" # semantically equivalent to all ports
 }
-
-resource "aws_network_acl_association" "public-subnet-association" {
-  subnet_id = aws_subnet.public-subnet.id
-  network_acl_id = aws_network_acl.public-NACL.id
-}
-
-resource "aws_instance" "public-instance" {
-  ami           = "ami-0427090fd1714168b"
-  #"ami-0c55b159cbfafe1f0" # Update this with a valid AMI ID for your region
+resource "aws_instance" "foo" {
+  ami           = "ami-04b70fa74e45c3917" # us-west-2
   instance_type = "t2.micro"
-  subnet_id     = aws_subnet.public-subnet.id
+  subnet_id = aws_subnet.public_subnet.id
+  vpc_security_group_ids = [aws_security_group.allow_tls.id]
+  availability_zone = "us-east-1a"
   key_name = "devopskeypair"
-  user_data = <<-EOF
-    #!/bin/bash
-    #use this for your user data
-    yum update -y
-    yum install -y httpd
-    systemctl start httpd
-    systemctl enable httpd
-    echo "<h1>A hot bowl of VPC a la carte</h1> /var/www/html/index.html
-  EOF
-
+  count = 5
+  user_data  =  "${file("UserData.sh")}"
+  
   tags = {
-    Name = "public-instance"
+    Name = "server1"
   }
+
+
 }
-
-resource "aws_instance" "private-instance" {
-  ami           = "ami-0427090fd1714168b"
-  #"ami-0c55b159cbfafe1f0" # Update this with a valid AMI ID for your region
-  instance_type = "t2.micro"
-  subnet_id     = aws_subnet.private-subnet.id
-  key_name = "devopskeypair"
-  user_data = <<-EOF
-    #!/bin/bash
-    #use this for your user data
-    yum update -y
-    yum install -y httpd
-    systemctl start httpd
-    systemctl enable httpd
-    echo "<h1>A hot bowl of VPC a la carte</h1> /var/www/html/index.html
-  EOF
-
-  tags = {
-    Name = "private-instance"
-  }
-}
-
