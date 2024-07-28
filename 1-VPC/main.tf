@@ -96,7 +96,7 @@ resource "aws_instance" "foo" {
   subnet_id = aws_subnet.public_subnet.id
   vpc_security_group_ids = [aws_security_group.allow_tls.id]
   availability_zone = "us-east-1a"
-  key_name = "~/Downloads/devopskeypair.pem"
+  key_name = "devopskeypair"
   count = 1
   user_data  =  "${file("UserData.sh")}"
 
